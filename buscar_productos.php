@@ -17,7 +17,15 @@ if ($busqueda === '') {
     exit();
 }
 
-//PRO-13: 
+//PRO-13: Permite buscar contenidos (productos) dentro del catálogo de la tienda utilizando un criterio de búsqueda textual parcial.
+// 1. Se prepara la ejecución del procedimiento almacenado GetContenidoByBusqueda().
+//    - Este procedimiento espera un parámetro: el patrón de búsqueda parcial.
+// 2. Se construye manualmente el patrón que se enviará al procedimiento:
+//    Al valor original de búsqueda ($busqueda) se le agregan los comodines % al inicio y al final, para que la búsqueda sea flexible y permita encontrar coincidencias en cualquier posición del texto.
+// 3. Se pasa el patrón de búsqueda con comodines al procedimiento.
+//    - Tipo de dato string ("s") porque es texto.
+// 4. MySQL realizará la búsqueda sobre la tabla contenido retornando los registros coincidentes.
+// 5. El resultado es un conjunto de filas (result set) con todos los productos cuyo nombre coincide con el criterio de búsqueda.
 $consulta = $conn->prepare("CALL GetContenidoByBusqueda(?)");
 $likeBusqueda = "%$busqueda%";
 $consulta->bind_param('s', $likeBusqueda);
