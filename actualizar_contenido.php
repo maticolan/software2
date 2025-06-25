@@ -13,6 +13,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $categoria = $_POST['categoria'];
 
     // PRO-01: Obtiene los datos actuales del contenido para saber el tipo de archivo y rutas
+    // 1. Creamos la variable stmt_tipo, donde se prepara la ejecución del procedure almacenado GetContenidoByNombreProd que recibe un parámetro.
+    //    Este procedure buscará en la tabla contenido el registro cuyo nombre_prod coincida con el parámetro. 
     $stmt_tipo = $conn->prepare("CALL GetContenidoByNombreProd(?)");
     $stmt_tipo->bind_param("s", $nombre_original);
     $stmt_tipo->execute();
