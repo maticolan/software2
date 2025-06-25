@@ -13,8 +13,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $categoria = $_POST['categoria'];
 
     // PRO-01: Obtiene los datos actuales del contenido para saber el tipo de archivo y rutas
-    // 1. Creamos la variable stmt_tipo, donde se prepara la ejecución del procedure almacenado GetContenidoByNombreProd que recibe un parámetro.
+    // 1. Creamos la variable $stmt_tipo, donde se prepara la ejecución del procedure almacenado GetContenidoByNombreProd que recibe un parámetro.
     //    Este procedure buscará en la tabla contenido el registro cuyo nombre_prod coincida con el parámetro. 
+    // 2. bind_param("s", $nombre_original) indica que el parámetro es de tipo string (s).
+    //    Se le pasa el valor de $nombre_original, que es el nombre actual del producto que se está editando.
+    // 3. Se le pasa el valor de $nombre_original, que es el nombre actual del producto que se está editando con execute().
+    // 4. Se obtiene el resultset devuelto por el procedure, que contiene (si existe) la fila completa del producto y se almacena en la variable $result.
+    // 5. En el bloque de if se realiza lo siguiente:
+    //    5.1. Se extrae la primera (y única) fila resultante.
+    //    5.2. Se almacenan 3 datos claves en variables PHP:
+    //         - $tipo_archivo_id: entero que indica el tipo de archivo (sirve para determinar la carpeta de almacenamiento).
+    //         - $ruta_archivo_actual: ruta física actual del archivo principal.
+    //         - $ruta_preview_actual: ruta física actual del archivo de vista previa. 
+    // 6. Se libera el recurso del statement para evitar fugas de memoria.
     $stmt_tipo = $conn->prepare("CALL GetContenidoByNombreProd(?)");
     $stmt_tipo->bind_param("s", $nombre_original);
     $stmt_tipo->execute();
