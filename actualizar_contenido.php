@@ -1,15 +1,18 @@
 <?php
+// Incluye la conexión a la base de datos
 include('conexion.php');
 session_start();
 
+// Verifica si se ha enviado el formulario por método POST
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
+     // Recupera los datos enviados desde el formulario
     $nombre_original = $_POST['nombre_original'];
     $nuevo_nombre = $_POST['nombre'];
     $descripcion = $_POST['descripcion'];
     $precio = $_POST['precio'];
     $categoria = $_POST['categoria'];
 
-    // PRO-01: 
+    // PRO-01: Obtiene los datos actuales del contenido para saber el tipo de archivo y rutas
     $stmt_tipo = $conn->prepare("CALL GetContenidoByNombreProd(?)");
     $stmt_tipo->bind_param("s", $nombre_original);
     $stmt_tipo->execute();
@@ -21,7 +24,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
     $stmt_tipo->close();
 
-    // Definimos carpeta según tipo
+    // Determina los directorios según el tipo de archivo
     if ($tipo_archivo_id >= 1 && $tipo_archivo_id <= 4) {
         $directorio_archivo = 'productos/audio/';
         $directorio_preview = 'preview/audio/';
@@ -37,6 +40,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     // PREVIEW
+    // Procesa el nuevo archivo de previsualización (preview), si fue cargado
     if (!empty($_FILES['preview']['tmp_name'])) {
         // Eliminamos el preview anterior si existe
         if (file_exists($ruta_preview_actual)) {
@@ -47,11 +51,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $ruta_preview = $directorio_preview . $nuevo_nombre_preview;
         move_uploaded_file($_FILES['preview']['tmp_name'], $ruta_preview);
     } else {
+         // Si no se subió uno nuevo, mantiene el anterior
         $ruta_preview = $ruta_preview_actual;
     }
 
     // ARCHIVO PRINCIPAL
+    // Procesa el nuevo archivo principal, si fue cargado
     if (!empty($_FILES['archivo']['tmp_name'])) {
+        // Elimina el archivo anterior
         if (file_exists($ruta_archivo_actual)) {
             unlink($ruta_archivo_actual);
         }
@@ -60,14 +67,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $ruta_archivo = $directorio_archivo . $nuevo_nombre_archivo;
         move_uploaded_file($_FILES['archivo']['tmp_name'], $ruta_archivo);
     } else {
+        // Si no se subió uno nuevo, mantiene el anterior
         $ruta_archivo = $ruta_archivo_actual;
     }
 
-    // PRO-02:
+    // PRO-02: Actualiza el contenido en la base de datos con los nuevos valores
     $stmt = $conn->prepare("CALL UpdateContenido(?, ?, ?, ?, ?, ?, ?)");
     $stmt->bind_param("ssdssss", $nuevo_nombre, $descripcion, $precio, $ruta_preview, $ruta_archivo, $categoria, $nombre_original);
     $stmt->execute();
-
+    // Verifica si se actualizó correctamente
     if ($stmt->affected_rows > 0) {
         header("Location: contenidos_admin.php?actualizado=1");
         exit;
