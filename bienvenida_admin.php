@@ -2,7 +2,14 @@
 include('conexion.php');
 session_start();
 
-// PRO-06:
+// PRO-06: Obtener el total de usuarios activos (clientes) registrados en el sistema.
+// 1. Preparación de la llamada al procedimiento.
+//    No requiere parámetros, porque el procedimiento simplemente ejecuta el conteo a nivel de servidor.
+// 2. Se ejecuta la llamada al procedimiento.
+// 3. Se obtiene el resultado devuelto por el procedimiento como un objeto de tipo mysqli_result.
+// 4. Luego, se obtiene la primera (y única) fila de resultados como un array asociativo.
+// 5. Se asigna el total obtenido al valor $totalUsuarios para que pueda ser utilizado en el resto de la aplicación 
+// 6. Se cierra correctamente el resultado liberando los recursos de la conexión.
 $resUsuarios = $conn->prepare("CALL GetTotalUsuarios()");
 $resUsuarios->execute();
 $resUsuarios = $resUsuarios->get_result();
@@ -10,7 +17,12 @@ $rowUsuarios = $resUsuarios->fetch_assoc();
 $totalUsuarios = $rowUsuarios['total'];
 $resUsuarios->close();
 
-// PRO-07:
+// PRO-07: Obtener el número total de descargas realizadas en la plataforma.
+// 1. Se crea una consulta preparada que llama al procedimiento GetTotalDescargas().
+// 2. Se ejecuta el procedimiento. MySQL cuenta el total de registros de la tabla descarga.
+// 3. Se obtiene el único registro retornado como array asociativo, cuyo índice 'total' contiene el número de descargas.
+// 4. Se guarda el total de descargas en la variable $totalDescargas para su uso posterior en la aplicación.
+// 5. Se cierra el resultado para liberar memoria y recursos de conexión.
 $resDescargas = $conn->prepare("CALL GetTotalDescargas()");
 $resDescargas->execute();
 $resDescargas = $resDescargas->get_result();
@@ -18,7 +30,15 @@ $rowDescargas = $resDescargas->fetch_assoc();
 $totalDescargas = $rowDescargas['total'];
 $resDescargas->close();
 
-// PRO-08:
+// PRO-08: Calcular el ingreso total generado por todas las descargas de la plataforma.
+// 1. Se prepara la llamada al procedimiento GetTotalIngresos().
+//    - No requiere parámetros de entrada.
+// 2. Se ejecuta el procedimiento.
+//     La base de datos calcula la suma total de los montos de todas las descargas.
+// 3. Se recupera el único registro como array asociativo con la clave 'total' que contiene la suma calculada.
+// 4. Se asigna el total de ingresos a la variable $totalIngresos.
+//    - Si la suma es NULL (por ejemplo, cuando no hay registros en descarga), se asigna el valor 0 como ingreso total.
+// 5. Se cierra el conjunto de resultados liberando recursos de la conexión.
 $resIngresos = $conn->prepare("CALL GetTotalIngresos()");
 $resIngresos->execute();
 $resIngresos = $resIngresos->get_result();
@@ -26,7 +46,17 @@ $rowIngresos = $resIngresos->fetch_assoc();
 $totalIngresos = $rowIngresos['total'] ?? 0;
 $resIngresos->close();
 
-// PRO-09:
+// PRO-09: Obtener el listado de los contenidos más vendidos en la plataforma, ordenados de mayor a menor según la cantidad de descargas realizadas.
+// 1. Se prepara la llamada al procedimiento GetContenidosMasVendidos().
+//    - No se reciben parámetros de entrada
+// 2. Se obtiene el conjunto de registros resultante: cada registro contiene un contenido y su número de descargas totales.
+// 3. Se transforma el resultado de la ejecución en un objeto result-set manipulable en PHP.
+// 4.1. Se recorre cada fila obtenida.
+// 4.2. Cada fila es un array asociativo con las claves:
+//      - 'contenido' -> nombre del producto
+//      - 'total_descargas' -> número de veces que ha sido descargado
+//      - Se va almacenando todo el conjunto de resultados en el array PHP $vendidos.
+// 5. Se cierra el conjunto de resultados liberando recursos del servidor.
 $resVendidos = $conn->prepare("CALL GetContenidosMasVendidos()");
 $resVendidos->execute();
 $resVendidos = $resVendidos->get_result();
@@ -36,7 +66,17 @@ while ($fila = $resVendidos->fetch_assoc()) {
 }
 $resVendidos->close();
 
-// PRO-10:
+// PRO-10: Obtener el listado de los clientes que han realizado más descargas en la plataforma, ordenados de mayor a menor según la cantidad de descargas que han efectuado.
+// 1. Se prepara la llamada al procedimiento GetClientesMasDescargadores().
+// 2. El procedimiento devuelve un conjunto de registros, donde cada registro representa a un cliente con su respectiva cantidad de descargas.
+// 3. Se transforma el resultado de la ejecución en un objeto result-set manejable en PHP.
+// 4.1. Se recorre cada fila obtenida.
+// 4.2. Cada fila es un array asociativo con las claves:
+//      - correo -> correo del cliente
+//      - nombre -> nombre del cliente
+//      - total_descargas -> cantidad de descargas realizadas por ese cliente.
+// 4.3. Se almacena cada fila dentro del array $clientes.
+// 5. Se cierra el conjunto de resultados, liberando los recursos.
 $resClientes = $conn->prepare("CALL GetClientesMasDescargadores()");
 $resClientes->execute();
 $resClientes = $resClientes->get_result();
@@ -46,7 +86,16 @@ while ($fila = $resClientes->fetch_assoc()) {
 }
 $resClientes->close();
 
-// PRO-11:
+// PRO-11: Obtener el listado de contenidos que han recibido calificaciones por parte de los usuarios, calculando el promedio de esas calificaciones, y mostrando los contenidos ordenados por ese promedio (de mayor a menor).
+// 1. Se prepara la invocación al procedimiento GetContenidoValorados().
+// 2. Devuelve un conjunto de registros: cada uno corresponde a un contenido con su respectivo promedio de calificación.
+// 3. Se convierte el resultado en un result set de PHP.
+// 4.1. Se recorre cada fila obtenida.
+// 4.2. Cada fila es un array asociativo con las claves:
+//      - contenido -> nombre del contenido
+//      - promedio -> el promedio de todas las notas registradas sobre dicho contenido
+// 4.3. Cada fila es agregada al array $valorados para su posterior uso (por ejemplo: mostrar en un ranking de los mejores valorados).
+// 5. Se cierra el result set liberando los recursos de conexión.
 $resValorados = $conn->prepare("CALL GetContenidoValorados()");
 $resValorados->execute();
 $resValorados = $resValorados->get_result();
