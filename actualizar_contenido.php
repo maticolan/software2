@@ -85,6 +85,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     // PRO-02: Actualiza el contenido en la base de datos con los nuevos valores
+    // 1. Se prepara una llamada a un procedimiento almacenado de MySQL llamado UpdateContenido, que admite 7 parámetros y se almacenará en la variabla $stmt.
+    // 2. Se asocian las variables PHP a los parámetros del procedure:
+    //     s = string, d = double (para el precio).
+    // 3. Se ejecuta la llamada al procedure enviando los valores actuales de las variables con execute().
+    // 4. En el bloque del if se comprueba si se realizó algún cambio en la base de datos (si hay filas afectadas, la actualización fue exitosa). 
+    // 5. Si fue exitoso, redirige al administrador a contenidos_admin.php con el parámetro actualizado=1 para mostrar un posible mensaje de éxito.
+    //    Si no se logró actualizar (por ejemplo, si el producto no existe o no cambió ningún campo), muestra un mensaje de error.
+    //    Se libera la memoria ocupada por el statement con close(). 
     $stmt = $conn->prepare("CALL UpdateContenido(?, ?, ?, ?, ?, ?, ?)");
     $stmt->bind_param("ssdssss", $nuevo_nombre, $descripcion, $precio, $ruta_preview, $ruta_archivo, $categoria, $nombre_original);
     $stmt->execute();
