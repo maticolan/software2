@@ -8,7 +8,10 @@ if (!in_array($tipo, ['audio', 'video', 'imagen'])) {
     die("Tipo de producto no válido.");
 }
 
-// PRO-05: 
+// PRO-05: Consulta de categorías (llamada al procedimiento almacenado GetCategorias)
+// 1. El statement queda listo para ejecutarse.
+// 2. Al ejecutarse, se recupera el listado de categorías existentes.
+// 3. Se obtiene un conjunto de resultados con los nombres de las categorías para mostrarlas en un <select> en el formulario.
 $stmt = $conn->prepare("CALL GetCategorias()");
 $extensiones_permitidas = [
     'audio' => ['mp3', 'wav', 'ogg', 'flac'],
