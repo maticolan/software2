@@ -75,7 +75,15 @@ $busqueda = isset($_GET['buscar']) ? $_GET['buscar'] : '';
 
     <?php
     if ($detalle && $modo == 'usuario') {
-        // PRO-15: 
+        // PRO-15: Permite obtener todos los datos de un usuario específico a partir de su correo electrónico.
+        // 1. Se prepara el procedimiento almacenado GetUsuarioByCorreo(), el cual espera 1 parámetro (el correo).
+        // 2. Se asigna el valor del parámetro:
+        //    - s -> string
+        //    - $detalle -> contiene el correo electrónico del usuario que se desea consultar.
+        // 3. Se ejecuta el procedimiento con el correo especificado.
+        // 4. Se obtiene el resultado de la consulta.
+        //    - Como el procedimiento devuelve solo 1 usuario (si existe), se obtiene directamente el primer resultado con fetch_assoc() y se almacena en $usuario.
+        // 5. Se libera la memoria y recursos del statement preparado.
         $stmt = $conn->prepare("CALL GetUsuarioByCorreo(?)");
         $stmt->bind_param("s", $detalle);
         $stmt->execute();
@@ -88,7 +96,18 @@ $busqueda = isset($_GET['buscar']) ? $_GET['buscar'] : '';
             <div><h1>{$usuario['nombre']}</h1></div></div>";
 
         echo "<h3>Calificaciones realizadas:</h3>";
-        // PRO-16:
+        // PRO-16: Obtener el listado de calificaciones realizadas por un usuario determinado en todos los contenidos que ha descargado o evaluado.
+        // 1. Se prepara el procedimiento almacenado GetCalificacionesPorUsuario() que tiene como parámetro correo.
+        // 2. Se asigna el valor del parámetro
+        //    - s -> string
+        //    - $detalle -> contiene el correo electrónico del usuario a consultar.
+        // 3. Se ejecuta el procedimiento almacenado pasando el correo especificado.
+        // 4. Se recuperan los resultados de la consulta.
+        // 5. Se recorre cada fila del resultado:
+        //    5.1. Se muestra la vista previa del contenido (ruta_preview).
+        //    5.2. El nombre del producto (nombre_prod) se presenta como enlace para ver el detalle de ese contenido.
+        //    5.3. Se muestra la nota asignada.
+        // 6. Se liberan los recursos del statement.
         $stmt = $conn->prepare("CALL GetCalificacionesPorUsuario(?)");
         $stmt->bind_param("s", $detalle);
         $stmt->execute();
@@ -105,7 +124,16 @@ $busqueda = isset($_GET['buscar']) ? $_GET['buscar'] : '';
         $stmt->close();
 
     } elseif ($detalle && $modo == 'contenido') {
-        // PRO-17:
+        // PRO-17: Recuperar todos los datos completos de un contenido específico, a partir de su nombre de producto (nombre_prod).
+        // 1. Se prepara el llamado al procedimiento almacenado GetContenidoPorNombre().
+        // 2. Se asigna el valor del parámetro
+        //    - s -> string
+        //    - $detalle -> contiene el nombre exacto del producto a consultar.
+        // 3. Se ejecuta la consulta con el nombre de producto recibido.
+        // 4. Se recuperan los resultados obtenidos de la ejecución del procedimiento.
+        // 5. Solo esperamos 1 registro (por ser nombre_prod clave primaria).
+        //    - Se almacena el contenido completo en el array asociativo $contenido.
+        // 6. Se liberan los recursos asociados al statement.
         $stmt = $conn->prepare("CALL GetContenidoPorNombre(?)");
         $stmt->bind_param("s", $detalle);
         $stmt->execute();
@@ -113,7 +141,16 @@ $busqueda = isset($_GET['buscar']) ? $_GET['buscar'] : '';
         $contenido = $res->fetch_assoc();
         $stmt->close();
 
-        // PRO-18: 
+        // PRO-18: Calcular el promedio de las calificaciones (notas) que ha recibido un contenido específico, utilizando los datos almacenados en la tabla de descargas (descarga).
+        // 1. Se invoca el procedimiento GetPromedioContenido().
+        // 2. Se asigna el valor del parámetro
+        //    - s -> string
+        //    - $detalle -> contiene el nombre exacto del producto del que se calculará el promedio de notas.
+        // 3. Ejecuta la llamada al procedimiento con el parámetro correspondiente.
+        // 4. Se recupera el resultado de la consulta (único registro esperado) y se almacena como array asociativo.
+        //    - El campo devuelto es promedio.
+        // 5. Se redondea el promedio a dos decimales para presentar el resultado de forma más amigable al usuario.
+        // 6. Se cierran los recursos asociados a la consulta.
         $stmt = $conn->prepare("CALL GetPromedioContenido(?)");
         $stmt->bind_param("s", $detalle);
         $stmt->execute();
@@ -138,7 +175,19 @@ $busqueda = isset($_GET['buscar']) ? $_GET['buscar'] : '';
         echo "</p><div class='promedio'>Promedio: {$promedio}</div></div></div>";
 
         echo "<h3>Calificaciones de usuarios:</h3>";
-        // PRO-19:
+        // PRO-19: Obtener el listado de todos los usuarios que han realizado descargas de un contenido específico y que, además, han registrado una calificación (nota).
+        // 1. Se invoca el procedimiento GetUsuariosConNotas().
+        // 2. Se asigna el valor del parámetro
+        //    - s -> string
+        //    - $detalle -> contiene el nombre exacto del contenido que estamos consultando.
+        // 3. Ejecuta el procedimiento con el parámetro establecido.
+        // 4. Recupera el conjunto de resultados retornados por el procedimiento.
+        // 5. Se recorre cada fila del resultado, obteniendo:
+        //    - nombre -> nombre del usuario que calificó.
+        //    - correo -> correo del usuario.
+        //    - nota -> calificación otorgada.
+        //    5.1. Se imprimen dinámicamente los datos en formato de tabla HTML.
+        // 6. Libera los recursos asociados a la ejecución de la consulta.
         $stmt = $conn->prepare("CALL GetUsuariosConNotas(?)");
         $stmt->bind_param("s", $detalle);
         $stmt->execute();
@@ -154,7 +203,21 @@ $busqueda = isset($_GET['buscar']) ? $_GET['buscar'] : '';
         $stmt->close();
 
     } elseif ($modo == 'usuario') {
-        // PRO-20: 
+        // PRO-20: Realizar una búsqueda flexible de usuarios, permitiendo encontrar usuarios cuyos nombres contengan una subcadena parcial introducida por el administrador en el buscador.
+        // 1. Se invoca el procedimiento almacenado GetUsuariosPorBusquedaAvanzada().
+        // 2. Antes de enviar el parámetro al procedimiento, se agregan los caracteres % a la cadena de búsqueda, de modo que la búsqueda sea flexible.
+        // 3. Se asigna el valor del parámetro
+        //    - s -> string
+        //    - Se envía el parámetro con los comodines aplicados.
+        // 4. Se ejecuta el procedimiento con el parámetro dado.
+        // 5. Se obtiene el conjunto de filas devuelto por el procedimiento.
+        // 6.1. Se recorren todas las filas obtenidas.
+        // 6.2. De cada fila, se recupera:
+        //      - nombre -> nombre del usuario encontrado.
+        //      - correo -> correo del usuario.
+        // 6.3. Se imprime un bloque HTML con cada usuario encontrado, incluyendo:
+        //      - Un círculo con la primera letra de su nombre.
+        //      - Un enlace que permite acceder al detalle del usuario en la misma vista (detalle en el query string).
         $stmt = $conn->prepare("CALL GetUsuariosPorBusquedaAvanzada(?)");
         $like = "%$busqueda%";
         $stmt->bind_param("s", $like);
@@ -170,7 +233,17 @@ $busqueda = isset($_GET['buscar']) ? $_GET['buscar'] : '';
         }
 
     } elseif ($modo == 'contenido') {
-        // PRO-21:
+        // PRO-21: Permite buscar contenidos (productos) de forma flexible, basándose en coincidencias parciales sobre el campo nombre_prod. Es utilizado para filtrar contenidos desde el panel de Gestión de Calificaciones → Filtrar por Contenido, facilitando encontrar rápidamente los productos almacenados, incluso escribiendo sólo una parte del nombre.
+        // 1. Se invoca el procedimiento almacenado GetContenidoPorBusqueda(), el cual espera un parámetro.
+        // 2. Antes de enviar el parámetro, el código agrega los comodines % para que el LIKE en MySQL funcione como búsqueda parcial.
+        // 3. Se asigna el valor del parámetro
+        //    - s -> string
+        //    - Se envía el parámetro con los comodines aplicados.
+        // 4. Se ejecuta la llamada al procedimiento almacenado.
+        // 5. Se recupera el resultado de la consulta para poder recorrer los registros encontrados.
+        // 6. Por cada fila obtenida:
+        //    - Se recupera nombre_prod (nombre del contenido) y ruta_preview (ruta de la imagen de vista previa).
+        //    Se genera dinámicamente el bloque HTML que mostrará cada producto encontrado.
         $stmt = $conn->prepare("CALL GetContenidoPorBusqueda(?)");
         $like = "%$busqueda%";
         $stmt->bind_param("s", $like);
