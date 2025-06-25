@@ -93,14 +93,13 @@ $busqueda = isset($_GET['buscar']) ? $_GET['buscar'] : '';
         $stmt->bind_param("s", $detalle);
         $stmt->execute();
         $res = $stmt->get_result();
-
         echo "<table><tr><th>Vista</th><th>Contenido</th><th>Nota</th></tr>";
         while ($fila = $res->fetch_assoc()) {
             echo "<tr>
-                <td><img src='{$fila['ruta_preview']}' width='60'></td>
-                <td><a href='calificaciones_admin.php?modo=contenido&detalle={$fila['nombre_prod']}'><b>{$fila['nombre_prod']}</b></a></td>
-                <td>{$fila['nota']}</td>
-            </tr>";
+                    <td><img src='{$fila['ruta_preview']}' width='60'></td>
+                    <td><a href='calificaciones_admin.php?modo=contenido&detalle={$fila['nombre_prod']}'><b>{$fila['nombre_prod']}</b></a></td>
+                    <td>{$fila['nota']}</td>
+                </tr>";
         }
         echo "</table>";
         $stmt->close();
@@ -112,6 +111,7 @@ $busqueda = isset($_GET['buscar']) ? $_GET['buscar'] : '';
         $stmt->execute();
         $res = $stmt->get_result();
         $contenido = $res->fetch_assoc();
+        $stmt->close();
 
         // PRO-18: 
         $stmt = $conn->prepare("CALL GetPromedioContenido(?)");
@@ -119,6 +119,7 @@ $busqueda = isset($_GET['buscar']) ? $_GET['buscar'] : '';
         $stmt->execute();
         $resProm = $stmt->get_result()->fetch_assoc();
         $promedio = round($resProm['promedio'], 2);
+        $stmt->close();
 
         echo "<div class='detalle-container'>
             <img class='detalle-imagen' src='{$contenido['ruta_preview']}'>
@@ -142,15 +143,15 @@ $busqueda = isset($_GET['buscar']) ? $_GET['buscar'] : '';
         $stmt->bind_param("s", $detalle);
         $stmt->execute();
         $res = $stmt->get_result();
-
         echo "<table><tr><th>Usuario</th><th>Nota</th></tr>";
         while ($fila = $res->fetch_assoc()) {
             echo "<tr>
-                <td><a href='calificaciones_admin.php?modo=usuario&detalle={$fila['correo']}'><div class='user-circle'>". strtoupper(substr($fila['nombre'],0,1)) ."</div> {$fila['nombre']}</a></td>
-                <td>{$fila['nota']}</td>
-            </tr>";
+                    <td><a href='calificaciones_admin.php?modo=usuario&detalle={$fila['correo']}'><div class='user-circle'>". strtoupper(substr($fila['nombre'], 0, 1)) ."</div> {$fila['nombre']}</a></td>
+                    <td>{$fila['nota']}</td>
+                </tr>";
         }
         echo "</table>";
+        $stmt->close();
 
     } elseif ($modo == 'usuario') {
         // PRO-20: 
